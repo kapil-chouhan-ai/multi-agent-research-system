@@ -166,6 +166,8 @@ AgentState(
 * Serper API
 
 ---
+### Output by v1
+<img width="1554" alt="Architecture" src="https://github.com/user-attachments/assets/04b40551-871b-41c0-9726-bf114ef84177" />
 
 ## Future Improvements
 
