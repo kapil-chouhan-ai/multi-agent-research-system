@@ -9,6 +9,8 @@ REPORTER_PROMPT = """
         - Preserve factual accuracy.
         - Do not invent information.
         - Include relevant sources.
+        - Do not infer future outcomes.
+        - Do not add conclusions not explicitly supported by findings.
 
         Return ONLY valid JSON.
 
