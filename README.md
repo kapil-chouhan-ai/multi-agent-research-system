@@ -9,6 +9,9 @@ A multi-agent research system that takes a user query, decomposes it into resear
 <img width="1536" alt="Architecture" src="https://github.com/user-attachments/assets/e26068e7-bc86-4dbd-a2f4-7081afd246ec" />
 
 ---
+### v2.0.0 output :
+<img width="790" alt="Architecture" src="https://github.com/user-attachments/assets/de22a950-3a30-49be-a13f-1b9c2355b5ad" />
+
 ---
 
 ## Agents
