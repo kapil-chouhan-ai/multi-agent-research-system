@@ -1,4 +1,45 @@
-Each arrow is a typed Pydantic schema, not a raw string or dict.
+# Multi-Agent Research System
+
+> **v2.0.0** — Plain Python. No agent frameworks. Typed schemas between agents. Retrieval-based research pipeline.
+
+A multi-agent research system that takes a user query, decomposes it into research tasks, retrieves grounded information from the web, and produces a structured research report.
+
+---
+
+## Architecture
+
+```text
+User Query
+    │
+    ▼
+[Manager Agent]
+    │
+    ▼
+Plan
+(main topic + research points)
+    │
+    ▼
+[Researcher Agent]
+    │
+    ├── URL Discovery
+    ├── Page Reading
+    ├── Chunking
+    ├── Embedding & Retrieval
+    └── Finding Generation
+    │
+    ▼
+Findings
+(topic + facts + sources)
+    │
+    ▼
+[Reporter Agent]
+    │
+    ▼
+Report
+(title + summary + sections)
+```
+
+Each arrow is a typed Pydantic schema, not a raw string or dictionary.
 
 ---
 
@@ -6,61 +47,124 @@ Each arrow is a typed Pydantic schema, not a raw string or dict.
 
 ### Manager Agent
 
-Receives the raw user query. Produces a `Plan` — a structured breakdown of what needs to be
-researched and in what order.
+Receives the raw user query and creates a structured research plan.
 
-**Input:** `query: str`
+**Input:** `str`
 **Output:** `Plan`
 
-Key responsibility: decompose an open-ended question into focused research points that the
-Researcher can execute one by one.
+Responsibilities:
+
+* Identify the main topic
+* Break the problem into focused research points
+* Produce a structured plan for downstream agents
 
 ---
 
 ### Researcher Agent
 
-Receives the `Plan`. For each research point, performs web searches using Serper API, extracts
-factual claims, and associates each claim with its source URL.
+Executes the research plan through a retrieval pipeline.
 
 **Input:** `Plan`
 **Output:** `list[Finding]`
 
-Key responsibility: grounded retrieval — every fact comes with a source. No hallucination from
-the LLM; facts come from actual web content.
+Responsibilities:
+
+* Discover relevant URLs using web search
+* Read full web page content
+* Chunk documents
+* Build a retrieval corpus
+* Retrieve evidence relevant to each research point
+* Generate grounded findings with source attribution
+
+Unlike V1, the Researcher does not rely only on search snippets.
 
 ---
 
 ### Reporter Agent
 
-Receives all findings. Synthesizes them into a coherent report with a title and summary.
+Transforms findings into a structured report.
 
 **Input:** `list[Finding]`
 **Output:** `Report`
 
-Key responsibility: structure, not invention. The Reporter only works with what the Researcher
-returned.
+Responsibilities:
+
+* Generate a descriptive title
+* Create an executive summary
+* Organize findings into topic-specific sections
+* Preserve source traceability
+
+The Reporter only works from findings produced by the Researcher.
+
+---
+
+## Research Pipeline
+
+The Researcher is internally composed of multiple nodes:
+
+```text
+Research Point
+      │
+      ▼
+URL Discovery
+      │
+      ▼
+Page Reader
+      │
+      ▼
+Chunking
+      │
+      ▼
+Research Corpus
+      │
+      ▼
+Embedding + Retrieval
+      │
+      ▼
+Relevant Chunks
+      │
+      ▼
+Finding Generator
+      │
+      ▼
+Finding
+```
+
+This architecture grounds report generation on retrieved page content instead of directly prompting an LLM with search results.
 
 ---
 
 ## Schemas (Pydantic Contracts)
 
-Agent-to-agent communication is validated at each step.
+Agent-to-agent communication is validated at every stage.
 
 ```python
 class Plan(BaseModel):
+    main_topic: str
     research_points: list[str]
+
 
 class Fact(BaseModel):
     statement: str
-    source: str
+    sources: list[str]
+
 
 class Finding(BaseModel):
     topic: str
     facts: list[Fact]
 
+
+class ReportSection(BaseModel):
+    topic: str
+    content: str
+    sources: list[str]
+
+
 class Report(BaseModel):
     title: str
     summary: str
+    sections: list[ReportSection]
+
 
 class AgentState(BaseModel):
     query: str
@@ -69,67 +173,87 @@ class AgentState(BaseModel):
     report: Report | None = None
 ```
 
-Using Pydantic here means: if an agent returns malformed output, it fails loudly at the schema
-boundary rather than silently corrupting downstream agents.
+Malformed agent output fails at schema boundaries instead of silently propagating through the system.
 
 ---
 
-```## Project Structure
+## Project Structure
+
+```text
 multi-agent-research-system/
 │
-├── LLM/                    # Groq API client wrapper and LLM call abstraction
+├── LLM/
+│   └── client_groq.py
 │
 ├── agents/
-│   ├── manager.py          # Manager agent logic
-│   ├── researcher.py       # Researcher agent logic
-│   └── reporter.py         # Reporter agent logic
+│   ├── manager.py
+│   ├── researcher.py
+│   └── reporter.py
+│
+├── nodes/
+│   ├── url_discovery.py
+│   ├── page_reader.py
+│   ├── chunking.py
+│   ├── retriever.py
+│   └── finding_generator.py
 │
 ├── prompts/
-│   ├── manager_prompt.py   # Manager system prompt
-│   ├── researcher_prompt.py
+│   ├── manager_prompt.py
+│   ├── finding_generator_prompt.py
 │   └── reporter_prompt.py
 │
 ├── schemas/
-│   ├── state.py            # AgentState
-│   ├── plan.py             # Plan
-│   ├── finding.py          # Fact, Finding
-│   └── report.py           # Report
+│   ├── state.py
+│   ├── plan.py
+│   ├── finding.py
+│   ├── report.py
+│   ├── chunk.py
+│   ├── page.py
+│   ├── source.py
+│   ├── corpus.py
+│   └── retrieval.py
 │
 ├── tools/
-│   └── web_search.py       # Serper API wrapper
+│   ├── web_search.py
+│   └── web_reader.py
 │
 ├── workflows/
-│   └── orchestrator.py     # Runs agents in sequence, manages state
+│   └── orchestrator.py
 │
-├── main.py                 # Entry point
-├── .gitignore
+├── testing/
+│
+├── main.py
+├── requirements.txt
 └── README.md
 ```
+
 ---
 
 ## Setup
 
 ### Prerequisites
 
-- Python 3.9+
-- Groq API key → [console.groq.com](https://console.groq.com)
-- Serper API key → [serper.dev](https://serper.dev)
+* Python 3.10+
+* Groq API key
+* Serper API key
 
 ### Install
 
 ```bash
-git clone https://github.com/kapil-18-pythonic/multi-agent-research-system.git
+git clone https://github.com/kapil-chouhan-ai/multi-agent-research-system.git
+
 cd multi-agent-research-system
+
 pip install -r requirements.txt
 ```
 
-### Configure environment
+### Configure Environment
 
-Create a `.env` file in the project root:
+Create a `.env` file:
 
 ```env
-GROQ_API_KEY=your_groq_key_here
-SERPER_API_KEY=your_serper_key_here
+GROQ_API_KEY=your_groq_api_key
+SERPER_API_KEY=your_serper_api_key
 ```
 
 ### Run
@@ -138,54 +262,80 @@ SERPER_API_KEY=your_serper_key_here
 python main.py
 ```
 
-You will be prompted to enter a research query. The system will:
-1. Plan the research
-2. Perform web searches
-3. Generate a structured report
+Example query:
+
+```text
+Research NVIDIA: LLMs, GPUs, AI Chips
+```
 
 ---
 
 ## Tech Stack
 
-| Component | Tool | Reason |
-|-----------|------|--------|
-| LLM inference | Groq API | Fast inference via LPU hardware |
-| Web search | Serper API | Google search results via API |
-| Schema validation | Pydantic | Typed contracts between agents |
-| Orchestration | Plain Python | No framework — explicit state passing |
+| Component       | Tool                  |
+| --------------- | --------------------- |
+| LLM Inference   | Groq API              |
+| Search          | Serper API            |
+| Page Extraction | Trafilatura           |
+| Embeddings      | Sentence Transformers |
+| Vector Search   | FAISS                 |
+| Validation      | Pydantic              |
+| Orchestration   | Plain Python          |
 
 ---
 
-## Current Limitations (V1)
+## What's New in v2.0.0
 
-- Researchers run sequentially, not in parallel
-- No retry logic if a web search returns empty results
-- No evaluation of report quality
-- No memory across sessions — each run starts fresh
-- LLM output parsing can fail if the model deviates from the expected schema format
+* Full web page extraction instead of search-snippet-only research
+* Retrieval-based research pipeline
+* Recursive document chunking
+* Embedding-based retrieval using FAISS
+* Grounded finding generation from retrieved evidence
+* Source attribution preserved throughout the pipeline
+* Structured report generation with topic-level sections
+* Stronger schema boundaries between components
+
+---
+
+## Current Limitations
+
+* Research points are processed sequentially
+* No reranking stage after retrieval
+* No retry strategy for failed page extraction
+* No domain filtering during URL discovery
+* No memory across sessions
+* Retrieval quality depends on embedding model quality
 
 ---
 
 ## Roadmap
 
-### V2 — Better Retrieval
-- Read full web pages, not just search snippets
-- Chunk and retrieve relevant sections
-- Improve source attribution
+### v3.0.0 — Parallel & Iterative Research
 
-### V3 — Parallel and Iterative
-- Run multiple Researcher agents in parallel (one per research point)
-- ReAct-style research loop: search → evaluate → decide to search again or stop
-- Human-in-the-loop: approve the plan before research starts
+* Parallel researcher execution
+* ReAct-style research loop
+* Query refinement
+* Human approval of plans
+* Reranking layer
 
-### V4 — Memory and Persistence
-- Persist research history across sessions
-- Reuse prior findings for related queries
-- Multi-session workflows
+### v4.0.0 — Memory & Persistence
+
+* Persistent research memory
+* Reusable findings
+* Multi-session workflows
+* Research history
 
 ---
 
 ## Goal
 
-Understand how multi-agent systems work at the mechanism level — schema design, prompt
-construction, state management, tool calling — before adding framework abstractions on top.
+Understand multi-agent systems from first principles:
+
+* Schema design
+* State management
+* Prompt engineering
+* Tool usage
+* Retrieval pipelines
+* Agent orchestration
+
+before introducing frameworks such as LangGraph or other agent abstractions.

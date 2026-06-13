@@ -11,3 +11,5 @@ venv/
 .env.local
 
 testing/
+
+Architecture.py
