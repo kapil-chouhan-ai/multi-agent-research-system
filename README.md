@@ -281,14 +281,14 @@ Research NVIDIA: LLMs, GPUs, AI Chips
 
 ## Roadmap
 
-v1.0  Basic Multi-Agent Research System
-v2.0  Retrieval + Reranking
-v2.1  Multi-Query Retrieval
-v2.2  Parallel Research
-v2.3  ReAct Agent
-v2.4  Human-in-the-Loop
-v2.5  Persistent Memory
-v2.6  Multi-Session Memory
+* v1.0  Basic Multi-Agent Research System
+* v2.0  Retrieval + Reranking
+* v2.1  Multi-Query Retrieval
+* v2.2  Parallel Research
+* v2.3  ReAct Agent
+* v2.4  Human-in-the-Loop
+* v2.5  Persistent Memory
+* v2.6  Multi-Session Memory
 
 ---
 
