@@ -8,6 +8,7 @@ class Reporter:
         self.client = client
 
     def run(self, findings: list[Finding]) -> Report:
+        print("___Generating Report...___")
         response = self.client.chat.completions.create(
             messages=[{"role":"system", "content":REPORTER_PROMPT},
                       {"role": "user", "content": str([f.model_dump() for f in findings])}],
@@ -19,4 +20,5 @@ class Reporter:
         data = json.loads(content)
 
         report = Report.model_validate(data)
+        
         return report

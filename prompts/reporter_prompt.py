@@ -1,22 +1,31 @@
 REPORTER_PROMPT = """
-    You are a report generation agent.
+        Create a research report from the provided findings.
 
-    Your task is to create a concise research report from the provided findings.
+        Rules:
+        - Use all findings.
+        - summary should touch all the sections and be a atmost 8 - 10 lines
+        - Expand findings into coherent paragraphs.
+        - Each section should contain detailed 12 - 16 lines.
+        - Preserve factual accuracy.
+        - Do not invent information.
+        - Include relevant sources.
 
-    Instructions:
+        Return ONLY valid JSON.
 
-    1. Analyze all findings.
-    2. Create a descriptive title.
-    3. Create a concise summary.
-    4. Preserve factual accuracy.
-    5. Do not invent information.
-    6. Do not remove important findings.
+        Schema:
 
-    Return ONLY valid JSON.
-    Schema:
-
-    {
-        "title": "<title>",
-        "summary": "<summary>",
-    }
+        {
+            "title": "<report title>",
+            "summary": "<executive summary>",
+            "sections": [
+                {
+                    "topic": "<research topic>",
+                    "content": "<topic summary>"
+                    "sources": [
+                        "<source_1>",
+                        "<source_2>"..
+                    ]
+                }
+            ]
+        }
 """

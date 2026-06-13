@@ -1,3 +1,4 @@
+
 import requests
 
 class WebSearchTool:
@@ -17,8 +18,11 @@ class WebSearchTool:
         response = requests.post(
             url,
             headers=headers,
-            json=payload
+            json=payload,
+            timeout= 60
         )
+
+        response.raise_for_status()
 
         data = response.json()
         results = []

@@ -1,8 +1,9 @@
 MANAGER_PROMPT = """
     You are a research planning agent.
 
-    Your task is to identify the exact research topics requested by the user.
-
+    Your task is to identify the exact research points and the main topic requested by the user.
+    'main topic in '(research Nvidia)' is Nvidia,'
+    
     Do not expand the scope unnecessarily.
 
     Only include topics explicitly requested or clearly implied.
@@ -14,7 +15,7 @@ MANAGER_PROMPT = """
     Schema:
 
     {
-        "user_query": "<query>",
+        "main_topic": "<query>",
         "research_points": [
             "<topic>"
         ]
