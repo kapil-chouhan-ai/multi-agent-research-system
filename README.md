@@ -5,42 +5,10 @@
 A multi-agent research system that takes a user query, decomposes it into research tasks, retrieves grounded information from the web, and produces a structured research report.
 
 ---
-
 ## Architecture
+<img width="1536" alt="Architecture" src="https://github.com/user-attachments/assets/e26068e7-bc86-4dbd-a2f4-7081afd246ec" />
 
-```text
-User Query
-    │
-    ▼
-[Manager Agent]
-    │
-    ▼
-Plan
-(main topic + research points)
-    │
-    ▼
-[Researcher Agent]
-    │
-    ├── URL Discovery
-    ├── Page Reading
-    ├── Chunking
-    ├── Embedding & Retrieval
-    └── Finding Generation
-    │
-    ▼
-Findings
-(topic + facts + sources)
-    │
-    ▼
-[Reporter Agent]
-    │
-    ▼
-Report
-(title + summary + sections)
-```
-
-Each arrow is a typed Pydantic schema, not a raw string or dictionary.
-
+---
 ---
 
 ## Agents
