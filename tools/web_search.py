@@ -19,7 +19,8 @@ class WebSearchTool:
             url,
             headers=headers,
             json=payload,
-            timeout= 60
+            timeout= 60,
+            
         )
 
         response.raise_for_status()

@@ -19,6 +19,9 @@ class FindingGeneratorNode:
 
                         ------------------------
                         """
+            print(chunk.url)
+            print(chunk.content[:600])
+            
         prompt = f"""
         Research Topic:
         {retrieval_result.topic}
@@ -32,7 +35,7 @@ class FindingGeneratorNode:
         response = self.client.chat.completions.create(
             messages=[{"role": "user", "content":prompt}],
             model = "llama-3.3-70b-versatile",
-            temperature = 0.3,
+            temperature = 0.0,
         )
 
         content = response.choices[0].message.content

@@ -39,13 +39,13 @@ web_reader = WebReader()
 
 # -------------------------Nodes -------------------------
 
-url_discovery = URLDiscoveryNode(search_tool=web_search_tool,top_k=3)
+url_discovery = URLDiscoveryNode(search_tool=web_search_tool,top_k = 7)
 
 page_reader = PageReaderNode(reader=web_reader)
 
 chunker = ChunkingNode(chunk_size=500,chunk_overlap=50)
 
-retriever = RetrieverNode(embedding_model=embedding_model,top_k= 5)
+retriever = RetrieverNode(embedding_model=embedding_model,top_k = 3)
 
 finding_generator = FindingGeneratorNode(client=groq_client)
 
@@ -73,9 +73,11 @@ orchestrator = Orchestrator(
 
 # -------------------------Run-------------------------
 
-query = "Research INDIA: LLMs, GPUs, AI Chips"
+query = "Research NVIDIA: AI chips only"
 
 state = orchestrator.run(query)
+for finding in state.findings:
+    print(finding.model_dump_json(indent=4))
 
 print("\n================ QUERY =================\n")
 print(state.query)

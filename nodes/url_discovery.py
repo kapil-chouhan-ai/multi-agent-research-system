@@ -8,11 +8,14 @@ class URLDiscoveryNode:
 
     def run(self, plan: Plan) -> list[Source]:
         discovered_url = set()
+        i = 1
         for point in plan.research_points:
+            print(f"url_{i}")
             search_result = self.search_tool.search(f"{plan.main_topic} {point}")
 
             for result in search_result[:self.top_k]:
                 discovered_url.add(result['url'])
+            
         return [
             Source(url = url) for url in discovered_url
         ]

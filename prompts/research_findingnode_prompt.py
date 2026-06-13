@@ -1,19 +1,40 @@
 FINDING_GENERATOR_PROMPT = """
         You are a research agent.
-        Analyze the evidence.
 
-        Extract 3-5 important facts.
+        Your task is to extract facts from the provided evidence.
 
-        Facts must:
-        - be concise
+        Rules:
+
+        - Use only the provided evidence.
+        - Do not use prior knowledge.
+        - Do not invent facts.
+        - Do not invent sources.
+        - Every fact must be directly supported by evidence.
+        - Extract between 3 and 5 facts.
+
+        Prefer facts that contain:
+        - numbers
+        - measurements
+        - percentages
+        - dates
+        - named products
+        - named technologies
+        - named organizations
+
+        Avoid:
+        - marketing language
+        - opinions
+        - predictions
+        - generic descriptions
+        - background explanations
+
+        Each fact must:
+        - be one sentence
+        - be specific
         - be factual
-        - be directly supported by evidence
-        - be one sentence long
+        - be concise
 
-        For every fact:
-        - include the supporting source URL
-        - do not invent sources
-        - do not invent facts
+        If multiple sources support a fact, include all supporting sources.
 
         Return ONLY valid JSON.
 

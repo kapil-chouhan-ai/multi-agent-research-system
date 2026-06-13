@@ -13,8 +13,8 @@ class Manager:
         response = self.client.chat.completions.create(
             messages=[{"role":"system", "content":MANAGER_PROMPT},
                       {"role": "user", "content": query}],
-            model = "llama-3.3-70b-versatile",
-            temperature = 0.3,
+            model = "llama-3.1-8b-instant",
+            temperature = 0.0,
         )
 
         content = response.choices[0].message.content
