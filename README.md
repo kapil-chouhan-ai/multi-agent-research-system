@@ -281,20 +281,14 @@ Research NVIDIA: LLMs, GPUs, AI Chips
 
 ## Roadmap
 
-### v3.0.0 — Parallel & Iterative Research
-
-* Parallel researcher execution
-* ReAct-style research loop
-* Query refinement
-* Human approval of plans
-* Reranking layer
-
-### v4.0.0 — Memory & Persistence
-
-* Persistent research memory
-* Reusable findings
-* Multi-session workflows
-* Research history
+v1.0  Basic Multi-Agent Research System
+v2.0  Retrieval + Reranking
+v2.1  Multi-Query Retrieval
+v2.2  Parallel Research
+v2.3  ReAct Agent
+v2.4  Human-in-the-Loop
+v2.5  Persistent Memory
+v2.6  Multi-Session Memory
 
 ---
 
