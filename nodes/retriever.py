@@ -4,7 +4,7 @@ import faiss
 import numpy as np
 
 class RetrieverNode:
-    def __init__(self, embedding_model, top_k: int = 5):
+    def __init__(self, embedding_model, top_k: int = 10):
         self.embedding_model = embedding_model
         self.top_k = top_k
 
@@ -25,22 +25,28 @@ class RetrieverNode:
         self.index = faiss.IndexFlatIP(d)
         self.index.add(self.embeddings)
 
-    def retrieve(self, topic: str) -> RetrievalResult:
-        topic_embs = np.array(self.embedding_model.encode([topic]), dtype = np.float32)
+    def ranked_indices(self, topic: str, top_k: int | None = None) -> list[tuple[int, float]]:
+        """Returns (chunk_index, cosine_score) sorted best-first, skipping the
+        -1 padding FAISS returns when the index has fewer than top_k vectors.
+        Used by HybridRetrieverNode for fusion and by eval/benchmark.py.
+        """
+        k = top_k or self.top_k
+        topic_embs = np.array(self.embedding_model.encode([topic]), dtype=np.float32)
         faiss.normalize_L2(topic_embs)
 
-        D, I = self.index.search(topic_embs, self.top_k)
+        D, I = self.index.search(topic_embs, k)
 
-        retrieved_chunks = []
-        retrieval_scores = []
+        return [
+            (int(idx), float(score))
+            for idx, score in zip(I[0], D[0])
+            if idx != -1
+        ]
 
-        for index, distance in zip(I[0], D[0]):
-            retrieved_chunks.append(self.chunks[index])
-            retrieval_scores.append(float(distance))
-        
+    def retrieve(self, topic: str) -> RetrievalResult:
+        ranked = self.ranked_indices(topic)
 
         return RetrievalResult(
-            topic = topic,
-            retrieved_chunks= retrieved_chunks,
-            retrieval_scores = retrieval_scores
+            topic=topic,
+            retrieved_chunks=[self.chunks[i] for i, _ in ranked],
+            retrieval_scores=[s for _, s in ranked],
         )

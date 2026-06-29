@@ -1,7 +1,7 @@
 from schemas.retrieval import RetrievalResult
 from schemas.findings import Finding
 from prompts.research_findingnode_prompt import FINDING_GENERATOR_PROMPT
-import json
+from tools.json_extractor import extract_json
 
 class FindingGeneratorNode:
     def __init__(self, client):
@@ -9,7 +9,6 @@ class FindingGeneratorNode:
 
     def run(self, retrieval_result: RetrievalResult) -> Finding:
         evidence = ""
-        findings = []
         for chunk in retrieval_result.retrieved_chunks:
             evidence += f"""
                         Source: {chunk.url}
@@ -19,9 +18,8 @@ class FindingGeneratorNode:
 
                         ------------------------
                         """
-            print(chunk.url)
-            print(chunk.content[:600])
             
+
         prompt = f"""
         Research Topic:
         {retrieval_result.topic}
@@ -30,15 +28,14 @@ class FindingGeneratorNode:
         {evidence}
         """
 
-        prompt = prompt + (FINDING_GENERATOR_PROMPT)
-
         response = self.client.chat.completions.create(
-            messages=[{"role": "user", "content":prompt}],
-            model = "llama-3.3-70b-versatile",
+            messages=[
+                {"role":"system", "content":FINDING_GENERATOR_PROMPT}
+                ,{"role": "user", "content":prompt}],
+            model = "openai/gpt-oss-20b",
             temperature = 0.0,
         )
 
         content = response.choices[0].message.content
-        content = content.replace("json", "").replace("```",'').strip()
-        data = json.loads(content)
+        data = extract_json(content)
         return Finding.model_validate(data)

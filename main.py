@@ -17,39 +17,54 @@ from tools.web_reader import WebReader
 from nodes.url_discovery import URLDiscoveryNode
 from nodes.page_reader import PageReaderNode
 from nodes.chunking import ChunkingNode
-from nodes.retriever import RetrieverNode
+from nodes.reranker import RerankerNode
+from nodes.reflect import ReflectNode
 from nodes.finding_generator import FindingGeneratorNode
+
+from memory.store import ResearchMemoryStore
 
 
 load_dotenv()
 
 serper_api_key = os.getenv("SERPER_API_KEY")
+use_mcp_search = os.getenv("USE_MCP_SEARCH", "false").lower() == "true"
+enable_hitl = os.getenv("ENABLE_HITL", "true").lower() == "true"
 
 # -------------------------Clients / Models-------------------------
 
 groq_client = get_client()
 
-embedding_model = SentenceTransformer("microsoft/harrier-oss-v1-270m")
+# NOTE: was "microsoft/harrier-oss-v1-270m" -- not a real HuggingFace model id
+# (same "unrecognized embedding model name" bug pattern seen before in the
+# RAG-from-scratch project). Swapped to a real, well-established small
+# retrieval embedding model.
+embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 #------------------------TOOLS------------------------------------
 
-web_search_tool = WebSearchTool(api_key=serper_api_key)
+if use_mcp_search:
+    from mcp_tools.search_client import MCPWebSearchTool
+    web_search_tool = MCPWebSearchTool()
+else:
+    web_search_tool = WebSearchTool(api_key=serper_api_key)
 
 web_reader = WebReader()
 
 # -------------------------Nodes -------------------------
 
-url_discovery = URLDiscoveryNode(search_tool=web_search_tool,top_k = 7)
+url_discovery = URLDiscoveryNode(search_tool=web_search_tool, top_k=7)
 
 page_reader = PageReaderNode(reader=web_reader)
 
-chunker = ChunkingNode(chunk_size=500,chunk_overlap=50)
+chunker = ChunkingNode(chunk_size=500, chunk_overlap=50)
 
-retriever = RetrieverNode(embedding_model=embedding_model,top_k = 3)
+reranker = RerankerNode(top_n=5)
+
+reflect_node = ReflectNode(client=groq_client)
 
 finding_generator = FindingGeneratorNode(client=groq_client)
 
-# -------------------------Agents------------------------- 
+# -------------------------Agents-------------------------
 
 manager = Manager(client=groq_client)
 
@@ -57,11 +72,20 @@ researcher = Researcher(
     url_discovery=url_discovery,
     page_reader=page_reader,
     chunker=chunker,
-    retriever=retriever,
+    embedding_model=embedding_model,
     finding_generator=finding_generator,
+    reflect_node=reflect_node,
+    reranker=reranker,
+    top_k=5,
+    pool_size=20,
+    rerank_top_n=5,
+    max_react_iters=2,
+    max_workers=4,
 )
 
 reporter = Reporter(client=groq_client)
+
+memory = ResearchMemoryStore(embedding_model=embedding_model)
 
 # -------------------------Orchestrator-------------------------
 
@@ -69,6 +93,8 @@ orchestrator = Orchestrator(
     manager=manager,
     researcher=researcher,
     reporter=reporter,
+    memory=memory,
+    human_in_the_loop=enable_hitl,
 )
 
 # -------------------------Run-------------------------
